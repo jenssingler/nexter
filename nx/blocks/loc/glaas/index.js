@@ -1,5 +1,5 @@
 import {
-  checkSession, createTask, addAssets, updateStatus, getTask, downloadAsset,
+  checkSession, createTask, addAssets, updateStatus, getTask, downloadAsset, prepareTargetPreview,
 } from './api.js';
 import { getGlaasToken, connectToGlaas } from './auth.js';
 
@@ -92,6 +92,7 @@ async function sendTask(service, suppliedTask, langs, urls, actions) {
     task.status = 'uploading';
     updateLangTask(task, langs);
     await addTaskAssets(service, langs, task, urls, actions);
+    await prepareTargetPreview(task, urls);
     updateLangTask(task, langs);
     await saveState();
   }

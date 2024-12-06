@@ -1,5 +1,7 @@
 import makeBatches from '../../../public/utils/batch.js';
 
+const callBackUrl = 'https://14257-miloc-jsingler.adobeioruntime.net/api/v1/web/miloc-0.0.1/daloc-hook';
+
 async function throttle(ms = 500) {
   return new Promise((resolve) => { setTimeout(() => { resolve(); }, ms); });
 }
@@ -35,10 +37,14 @@ export async function createTask({ origin, clientid, token, task }) {
     targetLocales,
     workflowName,
     contentSource: 'Adhoc',
-    config: [
+    callbackConfig: [
       {
-        value: 'https://translate.da.live',
-        key: 'preview-server',
+        value: 'taskCallbackURL',
+        key: callBackUrl,
+      },
+      {
+        value: 'assetCallbackURL',
+        key: callBackUrl,
       },
     ],
   };
@@ -83,7 +89,7 @@ export async function addAssets({ origin, clientid, token, langs, task, items },
       const file = new Blob([item.content], { type: 'text/html' });
       const details = {
         assetName: item.basePath,
-        metadata: { 'source-preview-url': `${item.basePath}?taskName=${name}&locale=MOCK_LOCALE` },
+        metadata: { 'source-preview-url': item.originalHref },
       };
 
       body.append('file1', file, item.basePath);
@@ -142,5 +148,25 @@ export async function downloadAsset(service, token, task, path) {
     return resp.blob();
   } catch {
     return { error: 'Error downloading asset.' };
+  }
+}
+
+export async function prepareTargetPreview(task, urls) {
+  const { name, workflow, workflowName, targetLocales } = task;
+  const workflowSplit = workflow.split('/');
+  if (workflowSplit.length === 2) {
+    const data = {
+      product: workflowSplit[0],
+      project: workflowSplit[1],
+      workflowName,
+      taskName: name,
+      targetLocales,
+      urls: urls.map((a) => a.originalHref),
+    };
+    await fetch('https://14257-daloc-jsingler.adobeioruntime.net/api/v1/web/daloc/init-target', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-OW-EXTRA-LOGGING': 'on' },
+      body: JSON.stringify(data),
+    });
   }
 }
