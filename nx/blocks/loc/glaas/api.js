@@ -1,7 +1,5 @@
 import makeBatches from '../../../public/utils/batch.js';
 
-const callBackUrl = 'https://14257-miloc-jsingler.adobeioruntime.net/api/v1/web/miloc-0.0.1/daloc-hook';
-
 async function throttle(ms = 500) {
   return new Promise((resolve) => { setTimeout(() => { resolve(); }, ms); });
 }
@@ -29,24 +27,21 @@ export async function checkSession({ origin, clientid, token }) {
   }
 }
 
-export async function createTask({ origin, clientid, token, task }) {
+export async function createTask({ origin, clientid, token, task, service }) {
   const { name, workflowName, workflow, targetLocales } = task;
+  const callbackConfig = [];
+  if (service.preview) {
+    const hookUrl = `https://${service.preview}/api/v1/web/daloc/glaas-hook`;
+    callbackConfig.push({ key: 'taskCallbackURL', value: hookUrl });
+    callbackConfig.push({ key: 'assetCallbackURL', value: hookUrl });
+  }
 
   const body = {
     name,
     targetLocales,
     workflowName,
     contentSource: 'Adhoc',
-    callbackConfig: [
-      {
-        value: 'taskCallbackURL',
-        key: callBackUrl,
-      },
-      {
-        value: 'assetCallbackURL',
-        key: callBackUrl,
-      },
-    ],
+    callbackConfig,
   };
 
   const opts = getOpts(clientid, token, JSON.stringify(body), 'application/json', 'POST');
@@ -151,7 +146,10 @@ export async function downloadAsset(service, token, task, path) {
   }
 }
 
-export async function prepareTargetPreview(task, urls) {
+export async function prepareTargetPreview(task, urls, service) {
+  if (!service.preview) {
+    return;
+  }
   const { name, workflow, workflowName, targetLocales } = task;
   const workflowSplit = workflow.split('/');
   if (workflowSplit.length === 2) {
@@ -163,7 +161,7 @@ export async function prepareTargetPreview(task, urls) {
       targetLocales,
       urls: urls.map((a) => a.originalHref),
     };
-    await fetch('https://14257-daloc-jsingler.adobeioruntime.net/api/v1/web/daloc/init-target', {
+    await fetch(`https://${service.preview}/api/v1/web/daloc/init-target`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-OW-EXTRA-LOGGING': 'on' },
       body: JSON.stringify(data),
