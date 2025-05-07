@@ -49,16 +49,34 @@ class NxLocProject extends LitElement {
 
     const needsSync = urls.some((url) => !url.extPath.startsWith(sourceLang.location));
     const translateLangs = langs.filter((lang) => lang.action === 'translate');
+    const englishCopyLangs = langs.filter((lang) => lang.action === 'english-copy');
     const rolloutLangs = langs.filter((lang) => lang.locales);
 
     if (needsSync) await this.setupSync(langs, options.sourceConflict);
     if (translateLangs.length > 0) await this.setupTranslate(translateLangs);
+    if (englishCopyLangs.length > 0) {
+      await this.setupEnglishCopy(englishCopyLangs, options.englishCopyConflict);
+    }
     if (rolloutLangs.length > 0) await this.setupRollout(rolloutLangs, options.rolloutConflict);
   }
 
   async setupSync(langs, behavior) {
     await import('./views/sync.js');
     const cmp = document.createElement('nx-loc-sync');
+    cmp.state = this._state;
+    cmp.title = this._title;
+    cmp.sourceLang = this._sourceLang;
+    cmp.sitePath = this._sitePath;
+    cmp.langs = langs;
+    cmp.urls = this._urls;
+    cmp.conflictBehavior = behavior;
+    this.shadowRoot.append(cmp);
+  }
+
+  async setupEnglishCopy(langs, behavior) {
+    await import('./views/english-copy.js');
+    const cmp = document.createElement('nx-loc-english-copy');
+    cmp.addEventListener('status', () => { this.updateSiblings(); });
     cmp.state = this._state;
     cmp.title = this._title;
     cmp.sourceLang = this._sourceLang;

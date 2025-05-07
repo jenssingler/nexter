@@ -46,13 +46,13 @@ class NxLocLangs extends LitElement {
         ready: lang.action === 'rollout' ? this.urls.length : undefined,
       };
       lang.translation = { status: lang.action === 'rollout' ? 'complete' : 'not started' };
+      lang.englishcopy = { status: lang.action === 'rollout' ? 'complete' : 'not started' };
       if (lang.locales) {
         lang.locales = lang.locales.filter((locale) => locale.active);
       }
     });
 
     const details = await loadIms();
-
 
     const project = {
       title: this.title,
@@ -129,6 +129,7 @@ class NxLocLangs extends LitElement {
     const sourceConflict = data.get('source.conflict.behavior');
     const returnConflict = data.get('translate.conflict.behavior');
     const rolloutConflict = data.get('rollout.conflict.behavior');
+    const englishCopyConflict = data.get('englishcopy.conflict.behavior');
     const autoPreview = data.get('complete.aem.preview');
     const autoPublish = data.get('complete.aem.publish');
     const environment = data.get('service.environment');
@@ -137,6 +138,7 @@ class NxLocLangs extends LitElement {
       sourceConflict,
       returnConflict,
       rolloutConflict,
+      englishCopyConflict,
       autoPreview,
       autoPublish,
       environment,
@@ -264,6 +266,7 @@ class NxLocLangs extends LitElement {
         <div class="da-loc-job-option-group">
           ${this.renderOption('On source sync', 'source.conflict.behavior')}
           ${this.renderOption('On translation return', 'translate.conflict.behavior')}
+          ${this.renderOption('On English Copy', 'englishcopy.conflict.behavior')}
           ${this.hasLocales() ? this.renderOption('On rollout', 'rollout.conflict.behavior') : nothing}
         </div>
       </div>
